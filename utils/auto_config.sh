@@ -8,7 +8,6 @@ env_file=".config_env"
 if [[ -f "$env_file" ]]; then
     while IFS='=' read -r key value
     do
-        # Remove spaces
         key=$(echo $key | xargs)
         value=$(echo $value | xargs)
 
@@ -26,10 +25,7 @@ echo
 echo -e "${green_color}This script will scan the local network for active IPs and attempt to SSH into each one.${reset_color}"
 echo
 
-# Get local machine IP
 primary_ip=$(hostname -I | awk '{print $1}')
-
-# Get network subnet
 subnet=$(ip -o -f inet addr show | awk '/scope global/ {print $4}' | grep "$primary_ip")
 
 echo "Scanning the network $subnet..."
@@ -39,21 +35,19 @@ echo
 echo -e "${green_color}Found IPs:${reset_color}"
 echo "$found_ips"
 
-# Attempt to SSH into each found IP
 reachable_ips=()
 unreachable_ips=()
 for ip in $found_ips; do
     echo
     echo -e "Attempting SSH connection to: ${green_color}$ip${reset_color}"
-    # Using SSH with BatchMode to avoid interactive prompts
     output=$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$username@$ip" 2>&1)
     result=$?
     if [[ $result -eq 0 ]]; then
         echo -e "${green_color}Success: Connected to $ip${reset_color}"
         reachable_ips+=("$ip (Successful login)")
-    elif [[ $output == *"Permission denied"* ]]; then
-        echo -e "${green_color}Reachable but access denied: $ip${reset_color}"
-        reachable_ips+=("$ip (Access denied)")
+    elif [[ $output == *"Permission denied"* || $output == *"Host key verification failed"* ]]; then
+        echo -e "${green_color}Reachable but access denied or host key issue: $ip${reset_color}"
+        reachable_ips+=("$ip (Access denied/host key issue)")
     else
         echo -e "${reset_color}Failed to connect to $ip - $output${reset_color}"
         unreachable_ips+=("$ip")
