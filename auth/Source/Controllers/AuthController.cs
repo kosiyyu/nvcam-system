@@ -49,7 +49,7 @@ public class AuthController : ControllerBase
             issuer: EnvSettings.JwtIssuer,
             audience: EnvSettings.JwtIssuer,
             claims: claims,
-            expires: DateTime.Now.AddMinutes(5),
+            expires: DateTime.Now.AddMinutes(60),
             signingCredentials: credentials
         );
 
