@@ -1,10 +1,9 @@
 #!/bin/bash
 
-source .config_env
+source nvcam.conf
 
 SSH_KEY_PATH="$HOME/.ssh/nvcam"
 
-# Check if the SSH key exists
 if [[ ! -f "$SSH_KEY_PATH" ]]; then
     echo "Error: SSH key not found at $SSH_KEY_PATH"
     exit 1

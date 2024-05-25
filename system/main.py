@@ -7,7 +7,7 @@ from video_stream_server.server import VideoStreamServer
 
 ROOM = 'room'
 
-load_dotenv('../utils/.config_env')
+load_dotenv('../utils/nvcam.conf')
 ip = os.getenv("IP") # camera ip address
 
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')

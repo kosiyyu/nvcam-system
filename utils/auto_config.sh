@@ -3,9 +3,9 @@
 green_color='\033[0;32m'
 reset_color='\033[0m'
 username=""
-env_file=".config_env"
+config_file="nvcam.conf"
 
-if [[ -f "$env_file" ]]; then
+if [[ -f "$config_file" ]]; then
     while IFS='=' read -r key value
     do
         key=$(echo $key | xargs)
@@ -15,9 +15,9 @@ if [[ -f "$env_file" ]]; then
             echo "Loaded USERNAME: $value"
             username=$value
         fi
-    done < "$env_file"
+    done < "$config_file"
 else
-    echo "Env file not found."
+    echo "Config config_file not found."
     exit 1
 fi
 
@@ -72,12 +72,12 @@ echo
 if [[ ${#reachable_ips[@]} -gt 0 ]]; then
     new_ip=$(echo "${reachable_ips[0]}" | awk '{print $1}')
 
-    if grep -q "^IP=" "$env_file"; then
-        sed -i "s/^IP=.*/IP=$new_ip/" "$env_file"
-        echo -e "${green_color}IP updated in $env_file to $new_ip${reset_color}"
+    if grep -q "^IP=" "$config_file"; then
+        sed -i "s/^IP=.*/IP=$new_ip/" "$config_file"
+        echo -e "${green_color}IP updated in $config_file to $new_ip${reset_color}"
     else
-        echo "IP=$new_ip" >> "$env_file"
-        echo -e "${green_color}IP set in $env_file to $new_ip${reset_color}"
+        echo "IP=$new_ip" >> "$config_file"
+        echo -e "${green_color}IP set in $config_file to $new_ip${reset_color}"
     fi
 else
     echo "No reachable IPs were found to save."

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-config_file=".config_env"
+config_file="nvcam.conf"
 key_path="$HOME/.ssh/nvcam"
 key_comment="nvcam"
 
