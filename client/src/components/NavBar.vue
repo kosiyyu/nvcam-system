@@ -14,8 +14,8 @@ function login() {
   router.push({ name: "home" });
 }
 
-function chat() {
-  router.push({ name: "chat" });
+function dashboard() {
+  router.push({ name: "dashboard" });
 }
 
 defineProps<{
@@ -45,7 +45,7 @@ defineProps<{
           </div>
           <div v-if="isOpen"
           class="flex flex-col items-center absolute top-0 right-0 mt-16 bg-white pt-2 pb-3 rounded-b-xl px-6 z-10">
-            <button @click="chat" class="h-8 hover:bg-special text-black font-bold py-1 px-4 rounded-full mb-2">
+            <button @click="dashboard" class="h-8 hover:bg-special text-black font-bold py-1 px-4 rounded-full mb-2">
               Chat
             </button>
             <button @click="register" class="h-8 hover:bg-special text-black font-bold py-1 px-4 rounded-full mb-2">

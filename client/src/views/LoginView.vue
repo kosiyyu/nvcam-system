@@ -33,7 +33,7 @@ const submitForm = () => {
     clearInputFields();
     isAuthenticated.value = true;
     console.log(isAuthenticated.value);
-    router.push({ name: 'chat' });
+    router.push({ name: 'dashboard' });
   })
   .catch(error => {
     console.log(error);

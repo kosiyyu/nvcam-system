@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { isAuthenticated, checkIsAuthenticated } from '@/utils/authUtils';
 import LoginView from '@/views/LoginView.vue';
-import ChatView from '@/views/ChatView.vue';
+import DashboardView from '@/views/DashboardView.vue';
 import RegisterView from '@/views/RegisterView.vue';
 
 const router = createRouter({
@@ -12,7 +12,7 @@ const router = createRouter({
       beforeEnter: (_to, _from, next) => {
         checkIsAuthenticated();
         if (isAuthenticated.value) {
-          next({ name: 'chat'});
+          next({ name: 'dashboard'});
         } else {
           next();
         }
@@ -21,9 +21,9 @@ const router = createRouter({
       component: LoginView
     },
     {
-      path: '/chat',
-      name: 'chat',
-      component: ChatView,
+      path: '/dashboard',
+      name: 'dashboard',
+      component: DashboardView,
       beforeEnter: (_to, _from, next) => {
         checkIsAuthenticated();
         if (isAuthenticated.value) {
