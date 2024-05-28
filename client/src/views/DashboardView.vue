@@ -9,10 +9,11 @@ import { isSocket } from "@/utils/dashboardUtils";
 let isPlaying = ref(false);
 let imageUrl = ref('');
 let socket: Socket | unknown = null;
+let cameraSocket: Socket | unknown = null;
 
 onMounted(() => {
   socket = io('http://localhost:8003');
-  // socket = io('http://localhost:8003', { transports: ['websocket'] });
+  cameraSocket = io('http://192.168.230.202:12345');
 
   if (!isSocket(socket)) {
     return;
@@ -47,6 +48,9 @@ onUnmounted(() => {
   if (isSocket(socket)) {
     socket.disconnect();
   }
+  if (isSocket(cameraSocket)) {
+    cameraSocket.disconnect();
+  }
 });
 
 function playVideo() {
@@ -55,6 +59,12 @@ function playVideo() {
 
 function pauseVideo() {
   isPlaying.value = false;
+}
+
+function move(direction: string) {
+  if (isSocket(cameraSocket)) {
+    cameraSocket.emit('move', direction);
+  }
 }
 </script>
 
@@ -78,6 +88,10 @@ function pauseVideo() {
               class="bg-special-pink hover:bg-special-pink text-black font-bold py-1 px-4 rounded-full">
               Play
             </button>
+          </div>
+          <div>
+            <button @click="move('left')" class="bg-special-pink hover:bg-special-pink text-black font-bold py-1 px-4 rounded-full">Move Left</button>
+            <button @click="move('right')" class="bg-special-pink hover:bg-special-pink text-black font-bold py-1 px-4 rounded-full">Move Right</button>
           </div>
         </div>
       </div>
