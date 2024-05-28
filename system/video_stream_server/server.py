@@ -62,6 +62,7 @@ class VideoStreamServer:
         )
 
         frame_bgr = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR_I420)
+        frame_bgr = cv2.rotate(frame_bgr, cv2.ROTATE_180) # just becous it's upside down
 
         _, jpeg = cv2.imencode('.jpg', frame_bgr)
         frame_data = jpeg.tobytes()
