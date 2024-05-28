@@ -44,7 +44,7 @@ def handle_move(direction):
 if __name__ == '__main__':
     try:
         print("Starting server...")
-        socketio.run(app, host='0.0.0.0', port=12345)
+        socketio.run(app, host='0.0.0.0', port=12345, allow_unsafe_werkzeug=True)
     except Exception as e:
         print("An error occurred while starting the server:")
         print(e)
