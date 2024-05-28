@@ -1,25 +1,15 @@
+from gpiozero import Motor, PWMOutputDevice
+from time import sleep
 from flask import Flask
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
-import RPi.GPIO as GPIO
-import time
 
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-GPIO.setmode(GPIO.BCM)
-
-motor_pin_1 = 17
-motor_pin_2 = 27
-ena_pin = 22
-
-GPIO.setup(motor_pin_1, GPIO.OUT)
-GPIO.setup(motor_pin_2, GPIO.OUT)
-GPIO.setup(ena_pin, GPIO.OUT)
-
-pwm_a = GPIO.PWM(ena_pin, 100)
-pwm_a.start(0)
+motor = Motor(forward=17, backward=27)
+enable_pin = PWMOutputDevice(pin=22, frequency=100)
 
 force = 32
 run_time = 0.09
@@ -33,18 +23,18 @@ def move_motor(direction):
     if direction == 'left':
         if current_position <= -max_position:
             return
+        motor.backward()
         current_position -= 1
     else:
         if current_position >= max_position:
             return
+        motor.forward()
         current_position += 1
-    
-    GPIO.output(motor_pin_2, GPIO.HIGH if direction == 'left' else GPIO.LOW)
-    GPIO.output(motor_pin_1, GPIO.LOW if direction == 'left' else GPIO.HIGH)
-    pwm_a.ChangeDutyCycle(force)
-    time.sleep(run_time)
-    pwm_a.ChangeDutyCycle(0)
-    time.sleep(break_time)
+
+    enable_pin.value = force / 100.0
+    sleep(run_time)
+    enable_pin.value = 0
+    sleep(break_time)
 
 @socketio.on('move')
 def handle_move(direction):
