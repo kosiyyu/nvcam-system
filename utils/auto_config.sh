@@ -37,13 +37,14 @@ echo "$found_ips"
 
 reachable_ips=()
 unreachable_ips=()
+
 for ip in $found_ips; do
     echo
     echo -e "Attempting SSH connection to: ${green_color}$ip${reset_color}"
-    output=$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$username@$ip" 2>&1)
+    output=$(timeout 10 ssh -o BatchMode=yes -o ConnectTimeout=5 "$username@$ip" 'echo connected && exit' 2>&1)
     result=$?
     if [[ $result -eq 0 ]]; then
-        echo -e "${green_color}Success: Connected to $ip${reset_color}"
+        echo -e "Success: Connected and responsive $ip"
         reachable_ips+=("$ip (Successful login)")
     elif [[ $output == *"Permission denied"* || $output == *"Host key verification failed"* ]]; then
         echo -e "${green_color}Reachable but access denied or host key issue: $ip${reset_color}"
@@ -77,7 +78,7 @@ if [[ ${#reachable_ips[@]} -gt 0 ]]; then
         echo -e "${green_color}IP updated in $config_file to $new_ip${reset_color}"
     else
         echo "IP=$new_ip" >> "$config_file"
-        echo -e "${green_color}IP set in $config_file to $new_ip${reset_color}"
+        echo -e "${green_color}IP set in $config_file to $new  new_ip${reset_color}"
     fi
 else
     echo "No reachable IPs were found to save."
