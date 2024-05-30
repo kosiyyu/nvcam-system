@@ -18,7 +18,6 @@ function initIsAuthenticated() {
 export const isAuthenticated = ref(initIsAuthenticated());
 
 export async function checkIsAuthenticated() {
-  console.log("test");
   axios.get("http://localhost:5003/api/validate", {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem("jwt")}`

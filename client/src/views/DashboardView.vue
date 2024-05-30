@@ -1,33 +1,44 @@
 <script setup lang="ts">
 import NavBar from "@/components/NavBar.vue";
 import { ref, onMounted, onUnmounted } from "vue";
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import { isAuthenticated } from "@/utils/authUtils";
-import { Socket } from "socket.io-client";
 import { isSocket } from "@/utils/dashboardUtils";
+
+const ip = import.meta.env.IP;
+
+interface SensorData {
+  temp: number;
+  humidity: number;
+  controller_temp: number;
+}
 
 let isPlaying = ref(false);
 let imageUrl = ref('');
-let socket: Socket | unknown = null;
+let sensorData = ref<SensorData>({ temp: 0, humidity: 0, controller_temp: 0 });
+
 let cameraSocket: Socket | unknown = null;
+let motorSocket: Socket | unknown = null;
+let sensorSocket: Socket | unknown = null;
 
 onMounted(() => {
-  socket = io('http://localhost:8003');
-  cameraSocket = io('http://192.168.230.202:12345');
+  cameraSocket = io('http://localhost:8003');
+  motorSocket = io(`http://${ip}:12345`);
+  sensorSocket = io(`http://${ip}:12344`);
 
-  if (!isSocket(socket)) {
+  if (!isSocket(cameraSocket)) {
     return;
   }
 
-  socket.on('connect', () => {
-    console.log('Connected to signaling server');
-  });
+  if (!isSocket(sensorSocket)) {
+    return;
+  }
 
-  socket.on('ready', () => {
-    console.log('Ready to receive frames');
-  });
+  if (!isSocket(motorSocket)) {
+    return;
+  }
 
-  socket.on('frame', (data) => {
+  cameraSocket.on('frame', (data) => {
     if (!isPlaying.value) return;
     // console.log(`Received frame of size: ${data.byteLength} bytes`);
     const uint8Array = new Uint8Array(data);
@@ -35,21 +46,23 @@ onMounted(() => {
     imageUrl.value = URL.createObjectURL(blob);
   });
 
-  socket.on('disconnect', () => {
-    console.log('Disconnected from signaling server');
-  });
-
-  socket.on('connect_error', (error) => {
-    console.error(`Connection error: ${error}`);
+  sensorSocket.on('sensor_data', (data) => {
+    // console.log(data);
+    sensorData.value = data;
   });
 });
 
 onUnmounted(() => {
-  if (isSocket(socket)) {
-    socket.disconnect();
-  }
   if (isSocket(cameraSocket)) {
     cameraSocket.disconnect();
+  }
+
+  if (isSocket(sensorSocket)) {
+    sensorSocket.disconnect();
+  }
+
+  if (isSocket(motorSocket)) {
+    motorSocket.disconnect();
   }
 });
 
@@ -62,8 +75,8 @@ function pauseVideo() {
 }
 
 function move(direction: string) {
-  if (isSocket(cameraSocket)) {
-    cameraSocket.emit('move', direction);
+  if (isSocket(motorSocket)) {
+    motorSocket.emit('move', direction);
   }
 }
 </script>
@@ -94,6 +107,11 @@ function move(direction: string) {
             <button @click="move('right')" class="bg-special-pink hover:bg-special-pink text-black font-bold py-1 px-4 rounded-full">Move Right</button>
           </div>
         </div>
+      </div>
+      <div>
+        <p>Controller temperature: {{ sensorData.controller_temp }} °C</p>
+        <p>Sensor temperature: {{ sensorData.temp }} °C</p>
+        <p>Sensor humidity: {{ sensorData.humidity }} RH</p>
       </div>
     </div>
   </main>

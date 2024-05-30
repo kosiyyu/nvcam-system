@@ -5,12 +5,11 @@ import time
 import board
 import adafruit_dht
 import threading
+import subprocess
 
 app = Flask(__name__)
-
 CORS(app)
-
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 dht_device = adafruit_dht.DHT11(board.D14)
 
@@ -19,9 +18,12 @@ def read_sensor():
         try:
             temperature = dht_device.temperature
             humidity = dht_device.humidity
-            
-            socketio.emit('sensor_data', {'temp': temperature, 'humidity': humidity})
-            print("Temp={0:0.1f}ºC, Humidity={1:0.1f}%".format(temperature, humidity))
+
+            vcgencmd_output = subprocess.check_output(['vcgencmd', 'measure_temp']).decode()
+            controller_temp = float(vcgencmd_output.split('=')[1].split('\'')[0])
+
+            socketio.emit('sensor_data', {'temp': temperature, 'humidity': humidity, 'controller_temp': controller_temp})
+            print("Temp={0:0.1f}ºC, Humidity={1:0.1f}%, Controller temp={2:0.1f}ºC".format(temperature, humidity, controller_temp))
         
         except RuntimeError as error:
             print(error.args[0])
