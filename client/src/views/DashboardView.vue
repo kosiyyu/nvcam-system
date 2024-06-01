@@ -13,7 +13,7 @@ interface SensorData {
   controller_temp: string;
 }
 
-let isPlaying = ref(false);
+let isPlaying = ref(true);
 let imageUrl = ref('');
 let sensorData = ref<SensorData>({ temp: "-", humidity: "-", controller_temp: "-" });
 
@@ -105,7 +105,7 @@ function move(direction: string) {
         </div>
       </div>
       <div class="my-4">
-        <div :style="{ width: '300px' }" class="bg-special-pink text-black font-bold rounded-lg p-4 mb-2 overflow-auto whitespace-normal">
+        <div class="w-[300px] bg-special-pink text-black font-bold rounded-lg p-4 mb-2 overflow-auto whitespace-normal">
           <div>Controller temperature: {{ sensorData.controller_temp }} °C</div>
           <div>Sensor temperature: {{ sensorData.temp }} °C</div>
           <div>Sensor humidity: {{ sensorData.humidity }} RH</div>
