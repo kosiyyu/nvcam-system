@@ -8,14 +8,14 @@ import { isSocket } from "@/utils/dashboardUtils";
 const ip = import.meta.env.IP;
 
 interface SensorData {
-  temp: number;
-  humidity: number;
-  controller_temp: number;
+  temp: string;
+  humidity: string;
+  controller_temp: string;
 }
 
 let isPlaying = ref(false);
 let imageUrl = ref('');
-let sensorData = ref<SensorData>({ temp: 0, humidity: 0, controller_temp: 0 });
+let sensorData = ref<SensorData>({ temp: "-", humidity: "-", controller_temp: "-" });
 
 let cameraSocket: Socket | unknown = null;
 let motorSocket: Socket | unknown = null;
@@ -84,7 +84,7 @@ function move(direction: string) {
 <template>
   <NavBar :is-authenticated="isAuthenticated" />
   <main class="bg-green-950 flex flex-col items-center h-screen">
-    <div>
+    <div class="flex space-x-4">
       <div class="flex flex-col items-center m-4">
         <div class="w-[640px] h-[360px] object-cover bg-black">
           <img :src="imageUrl">
@@ -102,16 +102,18 @@ function move(direction: string) {
               Play
             </button>
           </div>
-          <div>
-            <button @click="move('left')" class="bg-special-pink hover:bg-special-pink text-black font-bold py-1 px-4 rounded-full">Move Left</button>
-            <button @click="move('right')" class="bg-special-pink hover:bg-special-pink text-black font-bold py-1 px-4 rounded-full">Move Right</button>
-          </div>
         </div>
       </div>
-      <div>
-        <p>Controller temperature: {{ sensorData.controller_temp }} °C</p>
-        <p>Sensor temperature: {{ sensorData.temp }} °C</p>
-        <p>Sensor humidity: {{ sensorData.humidity }} RH</p>
+      <div class="my-4">
+        <div :style="{ width: '300px' }" class="bg-special-pink text-black font-bold rounded-lg p-4 mb-2 overflow-auto whitespace-normal">
+          <div>Controller temperature: {{ sensorData.controller_temp }} °C</div>
+          <div>Sensor temperature: {{ sensorData.temp }} °C</div>
+          <div>Sensor humidity: {{ sensorData.humidity }} RH</div>
+        </div>
+        <div class="flex justify-between">
+          <button @click="move('left')" class="bg-special-pink hover:bg-special-pink text-black font-bold py-1 px-4 rounded-full">Move Left</button>
+          <button @click="move('right')" class="bg-special-pink hover:bg-special-pink text-black font-bold py-1 px-4 rounded-full">Move Right</button>
+        </div>
       </div>
     </div>
   </main>
