@@ -1,9 +1,11 @@
+import os
 import asyncio
 import gi
 import cv2
 import numpy as np
 import threading
 from gi.repository import Gst, GLib
+from datetime import datetime
 
 Gst.init(None)
 
@@ -13,6 +15,7 @@ class VideoStreamServer:
     def __init__(self, sio, ip):
         self.sio = sio
         self.ip = ip
+        self.previous_frame = None
         self.pipeline = Gst.Pipeline.new("video-stream-pipeline")
         self.tcp_client_src = Gst.ElementFactory.make("tcpclientsrc", "tcp_client_src")
         self.tcp_client_src.set_property("host", self.ip)
@@ -62,7 +65,29 @@ class VideoStreamServer:
         )
 
         frame_bgr = cv2.cvtColor(frame, cv2.COLOR_YUV2BGR_I420)
-        frame_bgr = cv2.rotate(frame_bgr, cv2.ROTATE_180) # just becous it's upside down
+        frame_bgr = cv2.rotate(frame_bgr, cv2.ROTATE_180) # just becouse camera is located it's upside down
+        
+        contours = []
+        
+        if self.previous_frame is not None:
+            frame_delta = cv2.absdiff(self.previous_frame, frame_bgr)
+            gray = cv2.cvtColor(frame_delta, cv2.COLOR_BGR2GRAY)
+            _, thresh = cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)
+            thresh = cv2.dilate(thresh, None, iterations=2)
+            contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+        for contour in contours:
+            if cv2.contourArea(contour) > 10:
+                print("Motion detected!")
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                
+                if not os.path.exists('./images'):
+                    os.makedirs('./images')
+                
+                cv2.imwrite(f'./images/motion_frame_{timestamp}.jpg', frame_bgr)
+                break
+            
+        self.previous_frame = frame_bgr
 
         _, jpeg = cv2.imencode('.jpg', frame_bgr)
         frame_data = jpeg.tobytes()

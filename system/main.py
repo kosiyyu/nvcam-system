@@ -1,4 +1,5 @@
 import os
+import time
 from dotenv import load_dotenv
 import socketio
 import uvicorn
@@ -43,6 +44,7 @@ async def disconnect(sid):
 
 if __name__ == '__main__':
     try:
+        time.sleep(3)
         video_stream_server.run()
         uvicorn.run(app, host='0.0.0.0', port=8003)
     except KeyboardInterrupt:
