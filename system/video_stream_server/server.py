@@ -1,5 +1,6 @@
 import os
 import asyncio
+import glob
 import gi
 import cv2
 import numpy as np
@@ -13,9 +14,16 @@ ROOM = 'room'
 
 class VideoStreamServer:
     def __init__(self, sio, ip):
+        
+        self.size_limit_mb = 1000 - 5 # size limit in mb
+        self.sensitivity_save = 200 # one frame every n frames will be saved
+        self.contour_area_threshold = 600 # minimum area of contour to be considered as motion
+        
         self.sio = sio
         self.ip = ip
+        
         self.previous_frame = None
+        
         self.pipeline = Gst.Pipeline.new("video-stream-pipeline")
         self.tcp_client_src = Gst.ElementFactory.make("tcpclientsrc", "tcp_client_src")
         self.tcp_client_src.set_property("host", self.ip)
@@ -43,6 +51,12 @@ class VideoStreamServer:
         self.h264_decoder.link(self.video_converter)
         self.video_converter.link(self.app_sink)
 
+    def get_total_size(self):
+        total_size = 0
+        for img in glob.glob('./images/*.jpg'):
+            total_size += os.path.getsize(img)
+        return total_size / (1024 * 1024)  # convert bytes to mg
+
     def on_new_sample(self, sink):
         sample = sink.emit("pull-sample")
         buffer = sample.get_buffer()
@@ -51,7 +65,7 @@ class VideoStreamServer:
         height = caps.get_structure(0).get_value("height")
         format = caps.get_structure(0).get_value("format")
 
-        print(f"Received frame: width={width}, height={height}, format={format}")
+        # print(f"Received frame: width={width}, height={height}, format={format}")
 
         success, mapinfo = buffer.map(Gst.MapFlags.READ)
         if not success:
@@ -75,16 +89,24 @@ class VideoStreamServer:
             _, thresh = cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)
             thresh = cv2.dilate(thresh, None, iterations=2)
             contours, _ = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
+        
+        counter = 0
         for contour in contours:
-            if cv2.contourArea(contour) > 10:
-                print("Motion detected!")
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                
-                if not os.path.exists('./images'):
-                    os.makedirs('./images')
-                
-                cv2.imwrite(f'./images/motion_frame_{timestamp}.jpg', frame_bgr)
+            if self.get_total_size() < self.size_limit_mb:
+                if cv2.contourArea(contour) > self.contour_area_threshold:
+                    if counter % self.sensitivity_save == 0:
+                        
+                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                        print(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")} | Motion detected!')
+                        
+                        if not os.path.exists('./images'):
+                            os.makedirs('./images')
+                        
+                        cv2.imwrite(f'./images/motion_frame_{timestamp}.jpg', frame_bgr)
+                        break # remove this for sensitivity_save to work
+                    counter += 1
+            else:
+                print('Reached limit!')
                 break
             
         self.previous_frame = frame_bgr
@@ -93,7 +115,7 @@ class VideoStreamServer:
         frame_data = jpeg.tobytes()
         buffer.unmap(mapinfo)
 
-        print(f"Sending frame of size: {len(frame_data)} bytes")
+        # print(f"Sending frame of size: {len(frame_data)} bytes")
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
