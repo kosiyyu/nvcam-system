@@ -11,35 +11,40 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 motor = Motor(forward=17, backward=27)
 enable_pin = PWMOutputDevice(pin=22, frequency=100)
 
-force = 32
-run_time = 0.09
-break_time = 0.4
+force = 50
+step_duration = 0.09  
+idle_time = 0.1
 
-current_position = 0
-max_position = 2
+current_step = 0
+max_steps = 20
 
-def move_motor(direction):
-    global current_position
+def move_motor(steps, direction):
+    global current_step
     if direction == 'left':
-        if current_position <= -max_position:
-            return
-        motor.backward()
-        current_position -= 1
+        target_step = max(current_step - steps, -max_steps)
     else:
-        if current_position >= max_position:
-            return
-        motor.forward()
-        current_position += 1
+        target_step = min(current_step + steps, max_steps)
 
-    enable_pin.value = force / 100.0
-    sleep(run_time)
-    enable_pin.value = 0
-    sleep(break_time)
+    while (direction == 'left' and current_step > target_step) or (direction == 'right' and current_step < target_step):
+        if direction == 'left':
+            motor.backward()
+            current_step -= 1
+        else:
+            motor.forward()
+            current_step += 1
+
+        enable_pin.value = force / 100.0
+        sleep(step_duration)
+        enable_pin.value = 0
+        sleep(idle_time)
+        # print(steps, current_step)
 
 @socketio.on('move')
 def handle_move(direction):
-    move_motor(direction)
-    emit('status', {'message': f'Moved {direction.capitalize()}'})
+    steps = 1  # default number of steps
+
+    move_motor(steps, direction)
+    emit('status', {'message': f'Moved {direction.capitalize()} {steps} steps'})
 
 if __name__ == '__main__':
     try:
