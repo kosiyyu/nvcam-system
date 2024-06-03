@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  auth-service-db:
+  nvcam-db:
     image: mongo
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
@@ -9,7 +9,7 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - auth-service-db:/data/db
+      - nvcam-db:/data/db
 
 volumes:
-  auth-service-db:
+  nvcam-db:
